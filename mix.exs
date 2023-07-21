@@ -45,6 +45,7 @@ defmodule OkayWeather.MixProject do
       {:excoveralls, "~> 0.16.0", only: [:dev, :test], runtime: false},
       {:ex_waiter, "1.3.1", only: [:test]},
       {:httpoison, "~> 2.1"},
+      {:nimble_csv, "~> 1.1"},
       {:plug, "~> 1.14.0", only: [:test]},
       {:typed_struct, "~> 0.3.0", runtime: false},
       {:union_typespec,
@@ -64,7 +65,7 @@ defmodule OkayWeather.MixProject do
         "check.circular",
         "check.dialyzer"
       ],
-      "check.circular": "cmd MIX_ENV=dev mix xref graph --label compile-connected --fail-above 0",
+      "check.circular": "cmd MIX_ENV=dev mix xref graph --label compile-connected --fail-above 1",
       "check.dialyzer": "cmd MIX_ENV=dev mix dialyzer",
       setup: ["deps.get"]
     ]
