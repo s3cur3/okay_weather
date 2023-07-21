@@ -5,11 +5,14 @@ defmodule OkayWeather.Application do
 
   @impl true
   def start(_type, _args) do
+    HTTPoison.start()
+
     children = [
-      {Finch, name: OkayWeather.Finch}
+      {Task.Supervisor, name: OkayWeather.FetchSupervisor},
+      {Registry, keys: :unique, name: OkayWeather.AutoUpdatingCache}
     ]
 
-    opts = [strategy: :one_for_one, name: Cbt.Supervisor]
+    opts = [strategy: :one_for_one, name: OkayWeather.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

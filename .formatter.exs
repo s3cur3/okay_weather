@@ -6,5 +6,9 @@
   ],
   plugins: [],
   inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs,heex}"],
-  subdirectories: ["priv/*/migrations", "priv/repo/data_migrations"]
+  subdirectories: ["priv/*/migrations", "priv/repo/data_migrations"],
+  locals_without_parens: [
+    field: 2,
+    field: 3
+  ]
 ]

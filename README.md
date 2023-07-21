@@ -2,7 +2,7 @@
 
 # okay_weather 🌦
 
-**The okayest realtime-ish weather library you'll ever see.**
+**The okayest live-ish weather library you'll ever see.**
 
 `OkayWeather` is an Elixir package for looking up the current weather in a particular location.
 
@@ -16,3 +16,33 @@ Why it this just okay? A few reasons:
 Now, on the other hand, the thing that makes this library okay in a *positive* sense: it's free! Weather data can get expensive, especially at scale. NOAA's data is free, and if you can cache the results, you can get good enough data without breaking the bank.
 
 **Warning**: okay_weather is pre-alpha right now. Please assume everything is broken.
+
+
+## Installation
+
+1. Add the package to your `mix.exs`:
+```elixir
+defp deps do
+[
+    {:okay_weather, github: "s3cur3/okay_weather"},
+]
+end
+```
+2. Add `OkayWeather` to your `applications` list in `mix.exs`:
+```elixir
+def application do
+[
+    extra_applications: [:logger, :okay_weather],
+]
+end
+```
+3. Add `OkayWeather` to your supervision tree in your `application.ex`:
+```elixir
+def start(_type, _args) do
+    children = [
+    OkayWeather.child_spec(),
+    ]
+    ...
+end
+```
+4. Run `mix deps.get`

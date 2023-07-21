@@ -39,10 +39,13 @@ defmodule OkayWeather.MixProject do
 
   defp deps do
     [
+      {:bypass, "~> 2.1", only: [:test]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.16.0", only: [:dev, :test], runtime: false},
-      {:finch, "~> 0.13"},
+      {:ex_waiter, "1.3.1", only: [:test]},
+      {:httpoison, "~> 2.1"},
+      {:plug, "~> 1.14.0", only: [:test]},
       {:typed_struct, "~> 0.3.0", runtime: false},
       {:union_typespec,
        git: "https://github.com/felt/union_typespec.git", tag: "v0.0.2", runtime: false}
