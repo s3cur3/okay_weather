@@ -32,7 +32,7 @@ defmodule OkayWeather.AutoUpdatingCacheTest do
       Plug.Conn.resp(conn, 200, "#{DateTime.utc_now()}")
     end)
 
-    update_interval_ms = :timer.seconds(1)
+    update_interval_ms = 100
 
     {:ok, server} =
       AutoUpdatingCache.start_link(
@@ -46,7 +46,7 @@ defmodule OkayWeather.AutoUpdatingCacheTest do
     initial_result = AutoUpdatingCache.get(server)
     assert is_binary(initial_result)
 
-    Process.sleep(update_interval_ms)
+    Process.sleep(update_interval_ms * 4)
 
     updated_result = AutoUpdatingCache.get(server)
     assert is_binary(updated_result)
