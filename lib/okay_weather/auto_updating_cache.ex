@@ -78,7 +78,8 @@ defmodule OkayWeather.AutoUpdatingCache do
             updated_state
 
           {:error, err} ->
-            # TODO: If we fail to update, try an hour ago, then two hours ago, then four hours ago
+            # TODO: If we fail to update, try to get it from the disk cache.
+            # If there's no disk cache, try an hour ago, then two hours ago, then four hours ago.
             Logger.info("Failed to fetch #{State.url(state)} with error: #{inspect(err)}")
             state
         end

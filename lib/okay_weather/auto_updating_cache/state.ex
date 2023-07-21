@@ -8,8 +8,11 @@ defmodule OkayWeather.AutoUpdatingCache.State do
     field :url_generator, url_generator()
     field :transform, transform()
     field :update_timeout, timeout()
+
     field :raw_content, String.t() | nil, default: nil
     field :parsed_content, any, default: nil
+    field :fetched_at, NaiveDateTime.t(), default: nil
+    field :updated_for, NaiveDateTime.t(), default: nil
   end
 
   def url(%__MODULE__{} = state, for_time \\ DateTime.utc_now()) do
@@ -19,10 +22,19 @@ defmodule OkayWeather.AutoUpdatingCache.State do
   @spec update(t()) :: {:ok, t()} | {:error, any}
   def update(%__MODULE__{} = state, for_time \\ DateTime.utc_now()) do
     current_url = url(state, for_time)
+    fetched_at = NaiveDateTime.utc_now()
 
     with {:ok, raw} <- fetch(current_url),
          {:ok, parsed} <- state.transform.(raw) do
-      {:ok, %{state | raw_content: raw, parsed_content: parsed}}
+      updated_state = %{
+        state
+        | raw_content: raw,
+          parsed_content: parsed,
+          fetched_at: fetched_at,
+          updated_for: for_time
+      }
+
+      {:ok, updated_state}
     end
   end
 
