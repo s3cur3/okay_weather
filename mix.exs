@@ -43,6 +43,7 @@ defmodule OkayWeather.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.16.0", only: [:dev, :test], runtime: false},
+      {:ex_waiter, "1.3.1", only: [:test]},
       {:httpoison, "~> 2.1"},
       {:plug, "~> 1.14.0", only: [:test]},
       {:typed_struct, "~> 0.3.0", runtime: false},
