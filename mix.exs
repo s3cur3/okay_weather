@@ -42,7 +42,7 @@ defmodule OkayWeather.MixProject do
       {:bypass, "~> 2.1", only: [:test]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.16.0", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.17.0", only: [:dev, :test], runtime: false},
       {:ex_waiter, "1.3.1", only: [:test]},
       {:httpoison, "~> 2.1"},
       {:nimble_csv, "~> 1.1"},
