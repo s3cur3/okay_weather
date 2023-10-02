@@ -46,7 +46,7 @@ defmodule OkayWeather.MixProject do
       {:ex_waiter, "1.3.1", only: [:test]},
       {:httpoison, "~> 2.1"},
       {:nimble_csv, "~> 1.1"},
-      {:plug, "~> 1.14.0", only: [:test]},
+      {:plug, "~> 1.15.0", only: [:test]},
       {:typed_struct, "~> 0.3.0", runtime: false},
       {:union_typespec,
        git: "https://github.com/felt/union_typespec.git", tag: "v0.0.2", runtime: false}
