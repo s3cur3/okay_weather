@@ -1,6 +1,6 @@
 defmodule OkayWeather do
   @moduledoc """
-  An Elixir package for looking up the current weather in a particular location.
+  A library for looking up the current weather in a particular location.
 
   It will work by fetching METAR weather data from NOAA, parsing it, and providing a way to query it based on latitude and longitude or nearest airport.
 
@@ -46,7 +46,8 @@ defmodule OkayWeather do
 
   @spec child_spec([{:update_interval_ms, pos_integer()}]) :: Supervisor.child_spec()
   def child_spec(opts \\ [update_interval_ms: :timer.minutes(5)]) do
-    update_timeout = Keyword.get(opts, :update_interval_ms, :timer.minutes(5))
+    opts = Keyword.validate!(opts, update_interval_ms: :timer.minutes(5))
+    update_timeout = opts[:update_interval_ms]
     cache_spec(:metar, &OkayWeather.UrlGen.metar/1, &OkayWeather.Metar.parse/1, update_timeout)
   end
 

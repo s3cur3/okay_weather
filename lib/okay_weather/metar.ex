@@ -1,25 +1,59 @@
 defmodule OkayWeather.Metar do
   @enforce_keys [:airport_code]
-  defstruct [:airport_code, :temperature_deg_c, :dewpoint_deg_c]
+  defstruct [
+    :airport_code,
+    :issued,
+    :wind_direction_deg,
+    :wind_speed_kts,
+    :wind_gust_kts,
+    :visibility_m,
+    :weather_conditions,
+    :cloud_layers,
+    :temperature_deg_c,
+    :dewpoint_deg_c,
+    :altimeter,
+    :remarks
+  ]
 
   @type t :: %__MODULE__{
           airport_code: String.t(),
+          issued: DateTime.t() | nil,
+          wind_direction_deg: integer() | nil,
+          wind_speed_kts: integer() | nil,
+          wind_gust_kts: integer() | nil,
+          visibility_m: integer() | nil,
+          weather_conditions: [String.t()],
+          cloud_layers: [map()],
           temperature_deg_c: integer() | nil,
-          dewpoint_deg_c: integer() | nil
+          dewpoint_deg_c: integer() | nil,
+          altimeter: float() | nil,
+          remarks: [String.t()]
         }
+
+  @type opts :: [issued: DateTime.t()]
 
   @doc """
   Parses a METAR report into a map of airport codes to weather data.
   """
-  @spec parse(String.t()) :: {:ok, %{String.t() => t()}} | {:error, any}
-  def parse(metar_text) do
+  @spec parse(String.t(), opts()) :: {:ok, %{String.t() => t()}} | {:error, any}
+  def parse(metar_text, opts \\ []) do
+    issued_date = opts[:issued]
+
     parsed =
       metar_text
       |> String.split(~r/[\n\r]/)
-      |> Enum.map(&String.trim/1)
-      |> Enum.map(&String.split/1)
-      |> Map.new(&parse_tokenized_line/1)
-      |> Map.delete(nil)
+      |> Enum.map(fn s ->
+        s
+        |> String.trim()
+        |> String.split()
+        |> parse_tokenized_line(issued_date)
+      end)
+      |> Enum.filter(fn
+        {nil, _metar} -> false
+        {_code, nil} -> false
+        _ -> true
+      end)
+      |> Map.new()
 
     if Enum.empty?(parsed) do
       {:error, :no_usable_data}
@@ -29,35 +63,238 @@ defmodule OkayWeather.Metar do
   end
 
   # If we have fewer than two tokens, we can't possibly get anything out of this line
-  defp parse_tokenized_line([]), do: {nil, nil}
-  defp parse_tokenized_line([_]), do: {nil, nil}
+  defp parse_tokenized_line([], _issued_date), do: {nil, nil}
+  defp parse_tokenized_line([_], _issued_date), do: {nil, nil}
 
-  defp parse_tokenized_line([apt_code | other_tokens]) do
-    {temp_c, dewpoint_c} = parse_temp_and_dewpoint(other_tokens)
-
+  defp parse_tokenized_line([apt_code | other_tokens], issued_date) do
     metar = %__MODULE__{
       airport_code: apt_code,
-      temperature_deg_c: temp_c,
-      dewpoint_deg_c: dewpoint_c
+      issued: parse_issued_date(other_tokens, issued_date),
+      wind_direction_deg: parse_wind_direction_deg(other_tokens),
+      wind_speed_kts: parse_wind_speed_kts(other_tokens),
+      wind_gust_kts: parse_wind_gust_kts(other_tokens),
+      visibility_m: parse_visibility_m(other_tokens),
+      weather_conditions: parse_weather_conditions(other_tokens),
+      cloud_layers: parse_cloud_layers(other_tokens),
+      temperature_deg_c: parse_temperature(other_tokens),
+      dewpoint_deg_c: parse_dewpoint(other_tokens),
+      altimeter: parse_altimeter(other_tokens),
+      remarks: parse_remarks(other_tokens)
     }
 
     {apt_code, metar}
   end
 
-  defp parse_temp_and_dewpoint(tokens) do
-    # Standard temp format is 04/20, indicating 4 deg C temp and 20 deg C dewpoint.
-    # An M in front of either number indicates negative (minus).
-    # There are other tokens in the row that may include a slash, though, like 3/4SM,
-    # indicating prevailing visibility of 0.75 statute miles.
+  defp parse_issued_date(tokens, %DateTime{} = issued_date) do
+    with {day, hour, minute} when not is_nil(day) and not is_nil(hour) and not is_nil(minute) <-
+           {parse_day(tokens), parse_hour(tokens), parse_minute(tokens)},
+         {:ok, date} <- Date.new(issued_date.year, issued_date.month, day),
+         {:ok, time} <- Time.new(hour, minute, 0, 0),
+         {:ok, datetime} <- DateTime.new(date, time) do
+      DateTime.truncate(datetime, :second)
+    else
+      _ -> nil
+    end
+  end
+
+  defp parse_issued_date(_tokens, nil), do: nil
+
+  defp parse_day(tokens) do
+    case Enum.find(tokens, &String.match?(&1, ~r/^\d{6}Z$/)) do
+      nil ->
+        nil
+
+      date_time_str ->
+        day_str = String.slice(date_time_str, 0, 2)
+
+        case Integer.parse(day_str) do
+          {day, _} -> day
+          _ -> nil
+        end
+    end
+  end
+
+  defp parse_hour(tokens) do
+    case Enum.find(tokens, &String.match?(&1, ~r/^\d{6}Z$/)) do
+      nil ->
+        nil
+
+      date_time_str ->
+        hour_str = String.slice(date_time_str, 2, 2)
+
+        case Integer.parse(hour_str) do
+          {hour, _} -> hour
+          _ -> nil
+        end
+    end
+  end
+
+  defp parse_minute(tokens) do
+    case Enum.find(tokens, &String.match?(&1, ~r/^\d{6}Z$/)) do
+      nil ->
+        nil
+
+      date_time_str ->
+        minute_str = String.slice(date_time_str, 4, 2)
+
+        case Integer.parse(minute_str) do
+          {minute, _} -> minute
+          _ -> nil
+        end
+    end
+  end
+
+  defp parse_wind_direction_deg(tokens) do
+    case Enum.find(tokens, &String.match?(&1, wind_regex())) do
+      nil ->
+        nil
+
+      wind_str ->
+        direction_str = String.slice(wind_str, 0, 3)
+
+        case Integer.parse(direction_str) do
+          {direction, _} -> direction
+          _ -> nil
+        end
+    end
+  end
+
+  defp parse_wind_speed_kts(tokens) do
+    case Enum.find(tokens, &String.match?(&1, wind_regex())) do
+      nil ->
+        nil
+
+      wind_str ->
+        # Extract speed after direction (3 chars) and before optional gust
+        speed_part = String.slice(wind_str, 3, String.length(wind_str) - 3)
+
+        case Regex.run(~r/^(\d{2,3})(?:G\d{2,3})?KT$/, speed_part) do
+          [_, speed_str] ->
+            case Integer.parse(speed_str) do
+              {speed, _} -> speed
+              _ -> nil
+            end
+
+          _ ->
+            nil
+        end
+    end
+  end
+
+  defp parse_wind_gust_kts(tokens) do
+    case Enum.find(tokens, &String.match?(&1, wind_regex())) do
+      nil ->
+        nil
+
+      wind_str ->
+        case Regex.run(~r/G(\d{2,3})KT$/, wind_str) do
+          [_, gust_str] ->
+            case Integer.parse(gust_str) do
+              {gust, _} -> gust
+              _ -> nil
+            end
+
+          _ ->
+            nil
+        end
+    end
+  end
+
+  @miles_to_meters 16_09.344
+
+  defp parse_visibility_m(tokens) do
+    # Find visibility_m token that's not a wind token
+    case Enum.find(tokens, fn token ->
+           (String.match?(token, ~r/^\d{4}$/) or String.match?(token, ~r/^\d+SM$/)) and
+             not String.match?(token, wind_regex())
+         end) do
+      nil ->
+        nil
+
+      vis_str ->
+        # Handle statute miles (e.g., "10SM")
+        if String.ends_with?(vis_str, "SM") do
+          miles_str = String.slice(vis_str, 0, String.length(vis_str) - 2)
+
+          case Integer.parse(miles_str) do
+            {miles, _} -> miles * @miles_to_meters
+            _ -> nil
+          end
+        else
+          # Handle meters (e.g., "5000")
+          case Integer.parse(vis_str) do
+            {visibility_m, _} -> visibility_m
+            _ -> nil
+          end
+        end
+    end
+  end
+
+  defp wind_regex, do: ~r/^\d{3}\d{2,3}(?:G\d{2,3})?KT$/
+
+  defp parse_weather_conditions(tokens) do
+    Enum.filter(tokens, fn token ->
+      # Filter out common non-weather tokens
+      String.match?(token, ~r/^[+-]?[A-Z]{2,}$/) and
+        not Enum.member?(["KT", "SM", "RMK", "AUTO", "COR"], token)
+    end)
+  end
+
+  defp parse_cloud_layers(tokens) do
+    tokens
+    |> Enum.filter(&String.match?(&1, ~r/^[A-Z]{3}\d{3}$/))
+    |> Enum.map(fn cloud_str ->
+      coverage = String.slice(cloud_str, 0, 3)
+      height_str = String.slice(cloud_str, 3, 3)
+
+      case Integer.parse(height_str) do
+        {height, _} -> %{coverage: coverage, height_ft: height * 100}
+        _ -> %{coverage: coverage, height_ft: nil}
+      end
+    end)
+  end
+
+  defp parse_temperature(tokens) do
     case Enum.find(tokens, &String.match?(&1, ~r/^M?\d{1,2}\/M?\d{1,2}$/)) do
       nil ->
-        {nil, nil}
+        nil
 
       temp_token ->
-        temp_token
-        |> String.split("/")
-        |> Enum.map(&parse_temp/1)
-        |> List.to_tuple()
+        temp_part = String.split(temp_token, "/") |> List.first()
+        parse_temp(temp_part)
+    end
+  end
+
+  defp parse_dewpoint(tokens) do
+    case Enum.find(tokens, &String.match?(&1, ~r/^M?\d{1,2}\/M?\d{1,2}$/)) do
+      nil ->
+        nil
+
+      temp_token ->
+        dewpoint_part = String.split(temp_token, "/") |> List.last()
+        parse_temp(dewpoint_part)
+    end
+  end
+
+  defp parse_altimeter(tokens) do
+    case Enum.find(tokens, &String.match?(&1, ~r/^A\d{4}$/)) do
+      nil ->
+        nil
+
+      alt_str ->
+        pressure_str = String.slice(alt_str, 1, 4)
+
+        case Integer.parse(pressure_str) do
+          {pressure, _} -> pressure / 100.0
+          _ -> nil
+        end
+    end
+  end
+
+  defp parse_remarks(tokens) do
+    case Enum.split_while(tokens, &(&1 != "RMK")) do
+      {_before_rmk, ["RMK" | remarks]} -> remarks
+      _ -> []
     end
   end
 

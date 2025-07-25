@@ -6,7 +6,7 @@
 
 `OkayWeather` is an Elixir package for looking up the current weather in a particular location.
 
-It will work by fetching METAR weather data from NOAA, parsing it, and providing a way to query it based on latitude and longitude or nearest airport.
+It works by fetching [METAR weather data](https://en.wikipedia.org/wiki/METAR) from NOAA, parsing it, and providing a way to query it based on latitude and longitude or nearest airport.
 
 Why it this just okay? A few reasons:
 
@@ -22,27 +22,27 @@ Now, on the other hand, the thing that makes this library okay in a *positive* s
 
 1. Add the package to your `mix.exs`:
 ```elixir
-defp deps do
-[
+  defp deps do
+  [
     {:okay_weather, github: "s3cur3/okay_weather"},
-]
-end
+  ]
+  end
 ```
 2. Add `OkayWeather` to your `applications` list in `mix.exs`:
 ```elixir
-def application do
-[
+  def application do
+  [
     extra_applications: [:logger, :okay_weather],
-]
-end
+  ]
+  end
 ```
 3. Add `OkayWeather` to your supervision tree in your `application.ex`:
 ```elixir
-def start(_type, _args) do
+  def start(_type, _args) do
     children = [
-    OkayWeather.child_spec(),
+      OkayWeather.child_spec(),
     ]
     ...
-end
+  end
 ```
 4. Run `mix deps.get`

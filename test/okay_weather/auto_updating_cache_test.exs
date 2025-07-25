@@ -28,6 +28,7 @@ defmodule OkayWeather.AutoUpdatingCacheTest do
     assert AutoUpdatingCache.get(server) == String.upcase(body)
   end
 
+  @tag :timing
   test "updates on a schedule", %{bypass: bypass, bypass_domain: bypass_domain} do
     Bypass.expect(bypass, fn conn ->
       Plug.Conn.resp(conn, 200, "#{DateTime.utc_now()}")
