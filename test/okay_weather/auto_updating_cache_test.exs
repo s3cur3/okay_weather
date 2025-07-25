@@ -1,5 +1,6 @@
 defmodule OkayWeather.AutoUpdatingCacheTest do
   use ExUnit.Case, async: true
+  alias OkayWeather.AssertionHelpers
   alias OkayWeather.AutoUpdatingCache
 
   setup do
@@ -55,11 +56,7 @@ defmodule OkayWeather.AutoUpdatingCacheTest do
 
   defp await_content(pid) do
     ExUnit.CaptureLog.capture_log(fn ->
-      predicate = fn -> AutoUpdatingCache.get(pid) != :error end
-
-      predicate
-      |> ExWaiter.new_poller(delay: 10, max_attempts: 100)
-      |> ExWaiter.poll!()
+      AssertionHelpers.await(fn -> AutoUpdatingCache.get(pid) != :error end)
     end)
   end
 end

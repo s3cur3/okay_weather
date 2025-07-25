@@ -1,9 +1,10 @@
 defmodule OkayWeather.Airports.Airport do
-  use TypedStruct
+  @enforce_keys [:airport_code, :latitude, :longitude]
+  defstruct [:airport_code, :latitude, :longitude]
 
-  typedstruct enforce: true do
-    field :airport_code, String.t()
-    field :latitude, number()
-    field :longitude, number()
-  end
+  @type t :: %__MODULE__{
+          airport_code: String.t(),
+          latitude: number(),
+          longitude: number()
+        }
 end

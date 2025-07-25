@@ -1,11 +1,12 @@
 defmodule OkayWeather.Metar do
-  use TypedStruct
+  @enforce_keys [:airport_code]
+  defstruct [:airport_code, :temperature_deg_c, :dewpoint_deg_c]
 
-  typedstruct enforce: true do
-    field :airport_code, String.t()
-    field :temperature_deg_c, integer() | nil
-    field :dewpoint_deg_c, integer() | nil
-  end
+  @type t :: %__MODULE__{
+          airport_code: String.t(),
+          temperature_deg_c: integer() | nil,
+          dewpoint_deg_c: integer() | nil
+        }
 
   @doc """
   Parses a METAR report into a map of airport codes to weather data.

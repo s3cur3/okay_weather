@@ -1,19 +1,27 @@
 defmodule OkayWeather.AutoUpdatingCache.State do
-  use TypedStruct
+  @enforce_keys [:url_generator, :transform, :update_timeout]
+  defstruct [
+    :url_generator,
+    :transform,
+    :update_timeout,
+    :raw_content,
+    :parsed_content,
+    :fetched_at,
+    :updated_for
+  ]
+
+  @type t :: %__MODULE__{
+          url_generator: (DateTime.t() -> String.t()),
+          transform: (String.t() -> {:ok, any} | {:error, any}),
+          update_timeout: timeout(),
+          raw_content: String.t() | nil,
+          parsed_content: any() | nil,
+          fetched_at: NaiveDateTime.t() | nil,
+          updated_for: NaiveDateTime.t() | nil
+        }
 
   @type url_generator :: (DateTime.t() -> String.t())
   @type transform :: (String.t() -> {:ok, any} | {:error, any})
-
-  typedstruct enforce: true do
-    field :url_generator, url_generator()
-    field :transform, transform()
-    field :update_timeout, timeout()
-
-    field :raw_content, String.t() | nil, default: nil
-    field :parsed_content, any, default: nil
-    field :fetched_at, NaiveDateTime.t(), default: nil
-    field :updated_for, NaiveDateTime.t(), default: nil
-  end
 
   def url(%__MODULE__{} = state, for_time \\ DateTime.utc_now()) do
     state.url_generator.(for_time)

@@ -42,7 +42,7 @@ defmodule OkayWeather.AutoUpdatingCache do
 
   @impl GenServer
   def handle_call(:lookup, _from, %State{parsed_content: nil} = state) do
-    Logger.warn("No data yet for #{State.url(state)}")
+    Logger.warning("No data yet for #{State.url(state)}")
     {:reply, :error, state}
   end
 

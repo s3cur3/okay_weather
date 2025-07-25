@@ -13,11 +13,12 @@ defmodule OkayWeather.MetarTest do
 
   test "extracts airport code" do
     assert {:ok, metars} = Metar.parse(@sample_metar)
-    assert map_size(metars) == 3
 
-    for airport_code <- ["AAAA", "BBBB", "CCCC"] do
-      assert metars[airport_code].airport_code == airport_code
-    end
+    assert %{
+             "AAAA" => %Metar{airport_code: "AAAA"},
+             "BBBB" => %Metar{airport_code: "BBBB"},
+             "CCCC" => %Metar{airport_code: "CCCC"}
+           } = metars
   end
 
   test "extracts temperature and dewpoint" do
