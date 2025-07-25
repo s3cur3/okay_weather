@@ -6,6 +6,7 @@ defmodule OkayWeather.Airports do
   @external_resource @csv_file_path
   @airports OkayWeather.Airports.Parser.parse_csv(@csv_file_path)
 
+  @spec lon_lat(String.t()) :: {:ok, {number(), number()}} | {:error, :unknown_airport}
   def lon_lat(airport_code) do
     case @airports[airport_code] do
       nil -> {:error, :unknown_airport}

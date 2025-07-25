@@ -2,6 +2,7 @@ defmodule OkayWeather.Metar do
   @enforce_keys [:airport_code]
   defstruct [
     :airport_code,
+    :lon_lat,
     :issued,
     :wind_direction_deg,
     :wind_speed_kts,
@@ -17,6 +18,7 @@ defmodule OkayWeather.Metar do
 
   @type t :: %__MODULE__{
           airport_code: String.t(),
+          lon_lat: {number(), number()},
           issued: DateTime.t() | nil,
           wind_direction_deg: integer() | nil,
           wind_speed_kts: integer() | nil,
@@ -30,12 +32,30 @@ defmodule OkayWeather.Metar do
           remarks: [String.t()]
         }
 
+  @typedoc "A METAR collection maps airport identifier to the latest METAR data"
+  @type collection :: %{String.t() => t()}
+
+  @doc """
+  Finds the nearest METAR to the given longitude and latitude using the Haversine formula.
+
+  If no METAR is found (because the collection was empty), returns nil.
+  """
+  @spec nearest(collection(), {number(), number()}) :: t() | nil
+  def nearest(parsed_metars, desired_lon_lat) do
+    parsed_metars
+    |> Map.values()
+    |> Enum.sort_by(fn %__MODULE__{lon_lat: lon_lat} ->
+      Haversine.distance(lon_lat, desired_lon_lat)
+    end)
+    |> List.first()
+  end
+
   @type opts :: [issued: DateTime.t()]
 
   @doc """
   Parses a METAR report into a map of airport codes to weather data.
   """
-  @spec parse(String.t(), opts()) :: {:ok, %{String.t() => t()}} | {:error, any}
+  @spec parse(String.t(), opts()) :: {:ok, collection()} | {:error, any}
   def parse(metar_text, opts \\ []) do
     issued_date = opts[:issued]
 
@@ -69,6 +89,11 @@ defmodule OkayWeather.Metar do
   defp parse_tokenized_line([apt_code | other_tokens], issued_date) do
     metar = %__MODULE__{
       airport_code: apt_code,
+      lon_lat:
+        case OkayWeather.Airports.lon_lat(apt_code) do
+          {:ok, lon_lat} -> lon_lat
+          {:error, :unknown_airport} -> nil
+        end,
       issued: parse_issued_date(other_tokens, issued_date),
       wind_direction_deg: parse_wind_direction_deg(other_tokens),
       wind_speed_kts: parse_wind_speed_kts(other_tokens),

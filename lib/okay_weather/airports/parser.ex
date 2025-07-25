@@ -1,6 +1,7 @@
 NimbleCSV.define(OkayWeather.Airports.NimbleParser, separator: ",", escape: "\"")
 
 defmodule OkayWeather.Airports.Parser do
+  @moduledoc false
   alias OkayWeather.Airports.Airport
 
   @spec parse_csv(String.t()) :: %{String.t() => Airport.t()}

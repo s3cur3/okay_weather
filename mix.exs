@@ -44,6 +44,7 @@ defmodule OkayWeather.MixProject do
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.17", only: [:dev, :test], runtime: false},
       {:ex_waiter, "1.3.1", only: [:test]},
+      {:haversine, "~> 0.1"},
       {:httpoison, "~> 2.1"},
       {:nimble_csv, "~> 1.1"},
       {:plug, "~> 1.15.0", only: [:test]},
