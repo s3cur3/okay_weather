@@ -47,7 +47,7 @@ defmodule OkayWeather.MixProject do
       {:haversine, "~> 0.1"},
       {:httpoison, "~> 2.1"},
       {:nimble_csv, "~> 1.1"},
-      {:plug, "~> 1.15.0", only: [:test]},
+      {:plug, "~> 1.18.1", only: [:test]},
       {:union_typespec,
        git: "https://github.com/felt/union_typespec.git", tag: "v0.0.2", runtime: false}
     ]
