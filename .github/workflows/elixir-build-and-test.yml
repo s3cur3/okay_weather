@@ -47,4 +47,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./cover/excoveralls.json
+        if: ${{ matrix.elixir == '1.18.4' && matrix.otp == '28.0.2' }}
 
