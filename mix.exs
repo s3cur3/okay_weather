@@ -47,7 +47,7 @@ defmodule OkayWeather.MixProject do
       {:ex_waiter, "1.3.1", only: [:test]},
       {:haversine, "~> 0.1"},
       {:nimble_csv, "~> 1.1"},
-      {:plug, "~> 1.15.0", only: [:test]},
+      {:plug, "~> 1.18.1", only: [:test]},
       {:req, "~> 0.4"}
     ]
   end
