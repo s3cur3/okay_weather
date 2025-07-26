@@ -40,14 +40,34 @@ defmodule OkayWeather.Metar do
 
   If no METAR is found (because the collection was empty), returns nil.
   """
-  @spec nearest(collection(), {number(), number()}) :: t() | nil
-  def nearest(parsed_metars, desired_lon_lat) do
+  @spec nearest(collection() | [t()], {number(), number()}) :: t() | nil
+  def nearest(parsed_metars, desired_lon_lat) when is_map(parsed_metars) do
     parsed_metars
     |> Map.values()
+    |> nearest(desired_lon_lat)
+  end
+
+  def nearest(parsed_metars, desired_lon_lat) when is_list(parsed_metars) do
+    parsed_metars
+    |> Enum.reject(&is_nil(&1.lon_lat))
     |> Enum.sort_by(fn %__MODULE__{lon_lat: lon_lat} ->
       Haversine.distance(lon_lat, desired_lon_lat)
     end)
     |> List.first()
+  end
+
+  @doc """
+  Finds the nearest METAR to the given longitude and latitude that satisfies the given predicate.
+
+  If no METAR is found (because the collection was empty or no METAR satisfies the predicate),
+  returns nil.
+  """
+  @spec nearest_where(collection() | [t()], {number(), number()}, (t() -> boolean())) :: t() | nil
+  def nearest_where(parsed_metars, desired_lon_lat, predicate) when is_function(predicate, 1) do
+    parsed_metars
+    |> Map.values()
+    |> Enum.filter(predicate)
+    |> nearest(desired_lon_lat)
   end
 
   @type opts :: [issued: DateTime.t()]

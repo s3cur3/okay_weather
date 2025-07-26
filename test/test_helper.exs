@@ -1,2 +1,2 @@
-ExUnit.configure(exclude: [:timing])
+ExUnit.configure(exclude: [:integration, :timing])
 ExUnit.start()

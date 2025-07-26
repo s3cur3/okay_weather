@@ -155,20 +155,30 @@ defmodule OkayWeather.MetarTest do
     end
   end
 
-  describe "nearest" do
-    test "finds the nearest METAR" do
-      metars = %{
-        "LFPG" => %Metar{airport_code: "LFPG", lon_lat: {2.55, 49.012798}},
-        "KLAX" => %Metar{airport_code: "KLAX", lon_lat: {-118.407997, 33.942501}},
-        "KORD" => %Metar{airport_code: "KORD", lon_lat: {-87.904822, 41.978603}}
-      }
+  test "nearest/2 finds the nearest METAR" do
+    metars = %{
+      "LFPG" => %Metar{airport_code: "LFPG", lon_lat: {2.55, 49.012798}},
+      "KLAX" => %Metar{airport_code: "KLAX", lon_lat: {-118.407997, 33.942501}},
+      "KORD" => %Metar{airport_code: "KORD", lon_lat: {-87.904822, 41.978603}}
+    }
 
-      assert Metar.nearest(metars, {2.55, 49.012798}) == metars["LFPG"]
-      assert Metar.nearest(metars, {-118.407997, 33.942501}) == metars["KLAX"]
-      assert Metar.nearest(metars, {-87.904822, 41.978603}) == metars["KORD"]
+    assert Metar.nearest(metars, {2.55, 49.012798}) == metars["LFPG"]
+    assert Metar.nearest(metars, {-118.407997, 33.942501}) == metars["KLAX"]
+    assert Metar.nearest(metars, {-87.904822, 41.978603}) == metars["KORD"]
 
-      assert Metar.nearest(metars, {0, 0}) == metars["LFPG"]
-      assert Metar.nearest(metars, {-110, 30}) == metars["KLAX"]
-    end
+    assert Metar.nearest(metars, {0, 0}) == metars["LFPG"]
+    assert Metar.nearest(metars, {-110, 30}) == metars["KLAX"]
+  end
+
+  test "nearest_where/3 finds the nearest METAR that satisfies the predicate" do
+    metars = %{
+      "LFPG" => %Metar{airport_code: "LFPG", lon_lat: {2.55, 49.012798}},
+      "KLAX" => %Metar{airport_code: "KLAX", lon_lat: {-118.407997, 33.942501}},
+      "KORD" => %Metar{airport_code: "KORD", lon_lat: {-87.904822, 41.978603}}
+    }
+
+    assert Metar.nearest_where(metars, {0, 0}, &(&1.airport_code == "LFPG")) == metars["LFPG"]
+    assert Metar.nearest_where(metars, {0, 0}, &(&1.airport_code == "KLAX")) == metars["KLAX"]
+    assert Metar.nearest_where(metars, {0, 0}, &(&1.airport_code == "KORD")) == metars["KORD"]
   end
 end

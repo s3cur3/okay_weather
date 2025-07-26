@@ -23,39 +23,79 @@ defmodule OkayWeather do
     ]
     end
     ```
-  2. Add `OkayWeather` to your `applications` list in `mix.exs`:
+  2. Run `mix deps.get`
+  3. Grab the data:
     ```elixir
-    def application do
-    [
-      extra_applications: [:logger, :okay_weather],
-    ]
-    end
-    ```
-  3. Add `OkayWeather` to your supervision tree in your `application.ex`:
-    ```elixir
-    def start(_type, _args) do
-      children = [
-        OkayWeather.child_spec(),
-      ]
-      ...
-    end
-    ```
-  4. Run `mix deps.get`
-  """
-  alias OkayWeather.AutoUpdatingCache.State
+    case OkayWeather.nearest_metar({12.34, 56.78}) do
+      %OkayWeather.Metar{} = metar ->
+        # Do something with the METAR data
+        ...
 
-  @spec child_spec([{:update_interval_ms, pos_integer()}]) :: Supervisor.child_spec()
-  def child_spec(opts \\ [update_interval_ms: :timer.minutes(5)]) do
-    opts = Keyword.validate!(opts, update_interval_ms: :timer.minutes(5))
-    update_timeout = opts[:update_interval_ms]
-    cache_spec(:metar, &OkayWeather.UrlGen.metar/1, &OkayWeather.Metar.parse/1, update_timeout)
+      nil ->
+        # There was a problem fetching all METAR data
+        ...
+    end
+    ```
+  """
+  alias OkayWeather.AutoUpdatingCache
+  alias OkayWeather.LonLat
+  alias OkayWeather.Metar
+
+  @doc """
+  Finds the nearest METAR to the given longitude and latitude from the cache.
+
+  Note that opts are for testing purposes only.
+
+  ## Example
+
+      iex> match?(
+      ...>   %OkayWeather.Metar{airport_code: "LFPG", lon_lat: {2.55, 49.012798}},
+      ...>   OkayWeather.nearest_metar(%{lon: 2.54, lat: 49.0127})
+      ...> )
+      true
+  """
+  @spec nearest_metar(LonLat.input(), keyword) :: OkayWeather.Metar.t() | nil
+  def nearest_metar(lon_lat, opts \\ []) do
+    ll = LonLat.new!(lon_lat)
+
+    case metars(opts) do
+      {:ok, collection} -> Metar.nearest(collection, ll)
+      :error -> nil
+    end
   end
 
-  @spec cache_spec(atom, State.url_generator(), State.transform(), pos_integer()) ::
-          Supervisor.child_spec()
-  defp cache_spec(name, url_generator, transform, update_timeout)
-       when is_integer(update_timeout) do
-    args = [name, url_generator, transform, update_timeout]
-    %{id: name, start: {OkayWeather.AutoUpdatingCache, :start_link, args}}
+  @doc """
+  Finds the nearest METAR to the given longitude and latitude that satisfies the given predicate.
+
+  Note that opts are for testing purposes only.
+
+
+  ## Examples
+
+      iex> match?(
+      ...>   %OkayWeather.Metar{airport_code: "LFPG"},
+      ...>   OkayWeather.nearest_metar_where(
+      ...>     [lon: 0, lat: 0],
+      ...>     fn %OkayWeather.Metar{airport_code: code} -> code == "LFPG" end
+      ...>   )
+      ...> )
+      true
+  """
+  @spec nearest_metar_where(LonLat.input(), (Metar.t() -> boolean()), keyword) ::
+          OkayWeather.Metar.t() | nil
+  def nearest_metar_where(lon_lat, predicate, opts \\ []) do
+    ll = LonLat.new!(lon_lat)
+
+    case metars(opts) do
+      {:ok, collection} -> Metar.nearest_where(collection, ll, predicate)
+      :error -> nil
+    end
+  end
+
+  @doc "Return all METARs we know about"
+  @spec metars(keyword) :: {:ok, Metar.collection()} | :error
+  def metars(opts \\ []) do
+    opts = Keyword.validate!(opts, [:name])
+    AutoUpdatingCache.get(opts[:name] || :metar)
   end
 end

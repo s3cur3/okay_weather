@@ -17,7 +17,8 @@ defmodule OkayWeather.MixProject do
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.html": :test,
-        dialyzer: :dev
+        dialyzer: :dev,
+        "test.all": :test
       ],
       dialyzer: [
         ignore_warnings: ".dialyzer_ignore.exs",
@@ -45,11 +46,9 @@ defmodule OkayWeather.MixProject do
       {:excoveralls, "~> 0.17", only: [:dev, :test], runtime: false},
       {:ex_waiter, "1.3.1", only: [:test]},
       {:haversine, "~> 0.1"},
-      {:httpoison, "~> 2.1"},
       {:nimble_csv, "~> 1.1"},
       {:plug, "~> 1.15.0", only: [:test]},
-      {:union_typespec,
-       git: "https://github.com/felt/union_typespec.git", tag: "v0.0.2", runtime: false}
+      {:req, "~> 0.4"}
     ]
   end
 
@@ -60,14 +59,15 @@ defmodule OkayWeather.MixProject do
         "deps.unlock --check-unused",
         "compile --warnings-as-errors",
         "format --check-formatted",
-        "test --warnings-as-errors",
+        "test.all --warnings-as-errors",
         "credo",
         "check.circular",
         "check.dialyzer"
       ],
       "check.circular": "cmd MIX_ENV=dev mix xref graph --label compile-connected --fail-above 1",
       "check.dialyzer": "cmd MIX_ENV=dev mix dialyzer",
-      setup: ["deps.get"]
+      setup: ["deps.get"],
+      "test.all": ["test --include timing --include integration"]
     ]
   end
 end
