@@ -14,6 +14,11 @@ defmodule OkayWeather.MetarTest do
   @simple_metar "LFPG 161430Z 24015G25KT 5000 1100w"
 
   describe "parsing" do
+    test "copes with empty input" do
+      assert Metar.parse("") == {:error, :no_usable_data}
+      assert Metar.parse("\n\n") == {:error, :no_usable_data}
+    end
+
     test "extracts airport code" do
       assert {:ok, metars} = Metar.parse(@sample_metar)
 
