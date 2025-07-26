@@ -12,6 +12,7 @@ defmodule OkayWeatherTest do
     lfpg = %Metar{airport_code: "LFPG", lon_lat: {2.55, 49.012798}}
 
     OkayWeather.Env.put_env(:fetch_before_startup?, true)
+    OkayWeather.Env.put_env(:update_timeout, :infinity)
 
     Bypass.expect_once(bypass, "GET", "/", fn conn ->
       Plug.Conn.resp(conn, 200, "")

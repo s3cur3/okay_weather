@@ -15,7 +15,8 @@ defmodule OkayWeather.AutoUpdatingCache do
       name: name,
       url_generator: spec.url_generator,
       transform: spec.transform,
-      update_timeout: spec.update_timeout || :timer.minutes(5)
+      update_timeout:
+        spec.update_timeout || OkayWeather.Env.get_env(:update_timeout, :timer.minutes(5))
     }
 
     GenServer.start_link(__MODULE__, initial_state, name: via_tuple(name))
@@ -40,11 +41,6 @@ defmodule OkayWeather.AutoUpdatingCache do
   end
 
   @impl GenServer
-  def handle_call(:lookup, _from, %State{parsed_content: nil} = state) do
-    Logger.warning("No data yet for #{State.url(state)}")
-    {:reply, :error, state}
-  end
-
   def handle_call(:lookup, _from, %State{parsed_content: parsed_content} = state) do
     {:reply, {:ok, parsed_content}, state}
   end

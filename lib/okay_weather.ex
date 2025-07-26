@@ -35,13 +35,21 @@ defmodule OkayWeather do
 
   ## Configuration
 
-  There is only one application-level config value, `:fetch_before_startup?`.
-  This controls whether OkayWeather should attempt to fetch the latest
-  weather data *prior* to your application's startup.
+  The following configuration is available:
 
   ```elixir
-  config :okay_weather, fetch_before_startup?: true
+  config :okay_weather,
+    # Delay the application startup while trying to fetch the latest weather data?
+    # (Details below.)
+    fetch_before_startup?: true,
+    # How long should we wait between polling for new data?
+    update_timeout: to_timeout(minute: 5)
   ```
+
+  ### About  `:fetch_before_startup?`
+
+  This controls whether OkayWeather should attempt to fetch the latest
+  weather data *prior* to your application's startup.
 
   This defaults to true for the sake of correctness; when true, any call
   to `OkayWeather.*` will always be working from the latest available data.
