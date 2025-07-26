@@ -1,0 +1,10 @@
+defmodule OkayWeather.Env do
+  def get_env(key, default \\ nil)
+
+  if Mix.env() == :test do
+    def get_env(key, default), do: ProcessTree.get(key, cache: false, default: default)
+    def put_env(key, value), do: Process.put(key, value)
+  else
+    def get_env(key, default), do: Application.get_env(:okay_weather, key, default)
+  end
+end

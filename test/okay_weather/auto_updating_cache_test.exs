@@ -10,6 +10,8 @@ defmodule OkayWeather.AutoUpdatingCacheTest do
   test "works with simple URLs", %{bypass: bypass, bypass_domain: bypass_domain} do
     body = "Hello, world"
 
+    OkayWeather.Env.put_env(:fetch_before_startup?, true)
+
     Bypass.expect_once(bypass, "GET", "/", fn conn ->
       Plug.Conn.resp(conn, 200, body)
     end)

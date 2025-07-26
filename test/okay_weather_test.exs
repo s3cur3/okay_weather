@@ -11,6 +11,8 @@ defmodule OkayWeatherTest do
   test "nearest_metar", %{bypass: bypass, bypass_domain: bypass_domain} do
     lfpg = %Metar{airport_code: "LFPG", lon_lat: {2.55, 49.012798}}
 
+    OkayWeather.Env.put_env(:fetch_before_startup?, true)
+
     Bypass.expect_once(bypass, "GET", "/", fn conn ->
       Plug.Conn.resp(conn, 200, "")
     end)

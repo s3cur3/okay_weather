@@ -1,4 +1,4 @@
-[![Build and Test](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-build-and-test.yml/badge.svg)](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-build-and-test.yml) [![Elixir Type Linting](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-dialyzer.yml/badge.svg?branch=main)](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-dialyzer.yml) [![Elixir Quality Checks](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-quality-checks.yml/badge.svg)](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-quality-checks.yml) [![codecov](https://codecov.io/gh/s3cur3/okay_weather/branch/main/graph/badge.svg?token=98RJZ7WK8R)](https://codecov.io/gh/s3cur3/okay_weather) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Build and Test](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-build-and-test.yml/badge.svg)](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-build-and-test.yml) [![Elixir Type Linting](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-dialyzer.yml/badge.svg?branch=main)](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-dialyzer.yml) [![Elixir Quality Checks](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-quality-checks.yml/badge.svg)](https://github.com/s3cur3/okay_weather/actions/workflows/elixir-quality-checks.yml) [![codecov](https://codecov.io/gh/s3cur3/okay_weather/branch/main/graph/badge.svg?token=98RJZ7WK8R)](https://codecov.io/gh/s3cur3/okay_weather) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/s3cur3/okay_weather/blob/main/LICENSE)
 
 # okay_weather 🌦
 
@@ -28,21 +28,28 @@ Now, on the other hand, the thing that makes this library okay in a *positive* s
   ]
   end
 ```
-2. Add `OkayWeather` to your `applications` list in `mix.exs`:
+2. Run `mix deps.get`
+3. Optional, but strongly recommended: add OkayWeather configuration
+    (see below) to your `config/test.exs` and `config/dev.exs` files.
+
+## Configuration
+
+There is only one application-level config value, `:fetch_before_startup?`.
+This controls whether OkayWeather should attempt to fetch the latest 
+weather data *prior* to your application's startup.
+
 ```elixir
-  def application do
-  [
-    extra_applications: [:logger, :okay_weather],
-  ]
-  end
+config :okay_weather, fetch_before_startup?: true
 ```
-3. Add `OkayWeather` to your supervision tree in your `application.ex`:
-```elixir
-  def start(_type, _args) do
-    children = [
-      OkayWeather.child_spec(),
-    ]
-    ...
-  end
-```
-4. Run `mix deps.get`
+
+This defaults to true for the sake of correctness; when true, any call
+to `OkayWeather.*` will always be working from the latest available data.
+However, you almost certainly want this to be false in test environments
+(e.g., in your `config/test.exs`) and probably in dev as well 
+(`config/dev.exs`) so that you don't add a few seconds for a synchronous
+network request to the startup time of your application and test suite.
+
+When false, initial calls to OkayWeather functions will use METAR data from
+either the last successful fetch the application cached (if your 
+`System.tmp_dir!/0` remains in place from a prior successful launch of the
+application) or from an extremely old METAR that ships with the package.

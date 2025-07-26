@@ -35,12 +35,7 @@ defmodule OkayWeather.AutoUpdatingCache do
   ################ Server Implementation ################
   @impl GenServer
   def init(%State{} = state) do
-    updated_state =
-      case fetch_initial_value(state) do
-        {:ok, updated_state} -> updated_state
-        {:error, _} -> state
-      end
-
+    updated_state = fetch_initial_value(state)
     {:ok, schedule_update(updated_state)}
   end
 
@@ -96,27 +91,42 @@ defmodule OkayWeather.AutoUpdatingCache do
     state
   end
 
-  @max_hours_to_attempt 4
+  @max_fetch_attempts 4
 
-  @spec fetch_initial_value(State.t(), non_neg_integer(), DateTime.t()) ::
-          {:ok, State.t()} | {:error, String.t()}
-  defp fetch_initial_value(state, attempt \\ 0, dt \\ DateTime.utc_now())
-
-  defp fetch_initial_value(%State{} = state, attempt, dt) when attempt < @max_hours_to_attempt do
-    case State.update(state, dt, (attempt + 1) * 5_000) do
-      {:ok, _updated_state} = result -> result
-      _ -> fetch_initial_value(state, attempt + 1, DateTime.add(dt, -1, :hour))
+  @spec fetch_initial_value(State.t()) :: State.t()
+  defp fetch_initial_value(%State{} = state) do
+    if OkayWeather.Env.get_env(:fetch_before_startup?, true) do
+      fetch_initial_value_impl(state)
+    else
+      restore_from_disk(state)
     end
   end
 
-  defp fetch_initial_value(%State{} = state, _attempt, _dt) do
-    cached_content = File.read!(State.cache_path(state))
-    {:ok, parsed_content} = state.transform.(cached_content)
-    {:ok, %{state | raw_content: cached_content, parsed_content: parsed_content}}
+  @spec fetch_initial_value_impl(State.t(), non_neg_integer(), DateTime.t()) :: State.t()
+  defp fetch_initial_value_impl(state, attempt \\ 0, dt \\ DateTime.utc_now())
+
+  defp fetch_initial_value_impl(%State{} = state, attempt, dt)
+       when attempt < @max_fetch_attempts do
+    case State.update(state, dt, (attempt + 1) * 5_000) do
+      {:ok, updated_state} -> updated_state
+      _ -> fetch_initial_value_impl(state, attempt + 1, DateTime.add(dt, -1, :hour))
+    end
+  end
+
+  defp fetch_initial_value_impl(%State{} = state, _attempt, _dt) do
+    restore_from_disk(state)
+  end
+
+  defp restore_from_disk(%State{} = state) do
+    restore_from_disk!(state, State.cache_path(state))
   rescue
-    error ->
-      Logger.error("Failed to initialize cache with error: #{inspect(error)}")
-      {:error, "Failed to fetch initial value after #{@max_hours_to_attempt} attempts"}
+    _ -> restore_from_disk!(state, :okay_weather |> :code.priv_dir() |> Path.join("metar.txt"))
+  end
+
+  defp restore_from_disk!(%State{} = state, path) do
+    cached_content = File.read!(path)
+    {:ok, parsed_content} = state.transform.(cached_content)
+    %{state | raw_content: cached_content, parsed_content: parsed_content}
   end
 
   defp via_tuple(name) when is_atom(name), do: {:via, Registry, {__MODULE__, name}}

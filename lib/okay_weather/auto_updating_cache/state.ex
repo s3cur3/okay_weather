@@ -30,7 +30,7 @@ defmodule OkayWeather.AutoUpdatingCache.State do
   end
 
   def cache_path(%__MODULE__{} = state) do
-    System.tmp_dir!() |> Path.join("#{state.name}.json")
+    System.tmp_dir!() |> Path.join("#{state.name}.txt")
   end
 
   @spec update(t(), DateTime.t(), timeout) :: {:ok, t()} | {:error, any}

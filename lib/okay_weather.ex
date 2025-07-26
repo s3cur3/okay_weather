@@ -40,9 +40,13 @@ defmodule OkayWeather do
   alias OkayWeather.AutoUpdatingCache
   alias OkayWeather.LonLat
   alias OkayWeather.Metar
+  alias OkayWeather.Result
 
   @doc """
   Finds the nearest METAR to the given longitude and latitude from the cache.
+
+  Will never return nil, since even if the network fetch fails on startup, we fall back
+  to a local (disk) cache that ships with the package.
 
   Note that opts are for testing purposes only.
 
@@ -54,21 +58,17 @@ defmodule OkayWeather do
       ...> )
       true
   """
-  @spec nearest_metar(LonLat.input(), keyword) :: OkayWeather.Metar.t() | nil
+  @spec nearest_metar(LonLat.input(), keyword) :: OkayWeather.Metar.t()
   def nearest_metar(lon_lat, opts \\ []) do
     ll = LonLat.new!(lon_lat)
 
-    case metars(opts) do
-      {:ok, collection} -> Metar.nearest(collection, ll)
-      :error -> nil
-    end
+    Metar.nearest(metars(opts), ll)
   end
 
   @doc """
   Finds the nearest METAR to the given longitude and latitude that satisfies the given predicate.
 
   Note that opts are for testing purposes only.
-
 
   ## Examples
 
@@ -85,17 +85,18 @@ defmodule OkayWeather do
           OkayWeather.Metar.t() | nil
   def nearest_metar_where(lon_lat, predicate, opts \\ []) do
     ll = LonLat.new!(lon_lat)
-
-    case metars(opts) do
-      {:ok, collection} -> Metar.nearest_where(collection, ll, predicate)
-      :error -> nil
-    end
+    Metar.nearest_where(metars(opts), ll, predicate)
   end
 
   @doc "Return all METARs we know about"
-  @spec metars(keyword) :: {:ok, Metar.collection()} | :error
+  @spec metars(keyword) :: Metar.collection()
   def metars(opts \\ []) do
     opts = Keyword.validate!(opts, [:name])
-    AutoUpdatingCache.get(opts[:name] || :metar)
+
+    (opts[:name] || :metar)
+    |> AutoUpdatingCache.get()
+    # This will never be unpopulated, since we fill the cache on startup, falling back
+    # to a local cache that ships with the package if the network fetch fails.
+    |> Result.unwrap(%{})
   end
 end
