@@ -32,7 +32,9 @@ Now, on the other hand, the thing that makes this library okay in a *positive* s
     (see below) to your `config/test.exs` and `config/dev.exs` files.
 4. Use it:
     ```elixir
-    %OkayWeather.Metar{} = metar = OkayWeather.nearest_metar({12.34, 56.78}) do
+    latitude = 56.78
+    longitude = 12.34
+    %OkayWeather.Metar{} = metar = OkayWeather.nearest_metar(%{lon: longitude, lat: latitude})
     ```
 
 ## Configuration
