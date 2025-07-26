@@ -5,7 +5,7 @@ defmodule OkayWeather.MixProject do
     [
       app: :okay_weather,
       version: "0.1.0",
-      elixir: "~> 1.14",
+      elixir: "~> 1.15",
       consolidate_protocols: Mix.env() != :test,
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,

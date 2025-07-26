@@ -12,10 +12,21 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        elixir:
+          - "1.15.8"
+          - "1.18.4"
+        otp:
+          - "25.1.2"
+          - "28.0.2"
+        exclude:
+          - elixir: "1.15.8"
+            otp: "28.0.2"
     env:
       MIX_ENV: test
-      elixir: "1.14.4"
-      otp: "25.1.2"
+      elixir: ${{ matrix.elixir }}
+      otp: ${{ matrix.otp }}
 
     steps:
       - name: Checkout repository
