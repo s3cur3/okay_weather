@@ -37,6 +37,6 @@ defmodule OkayWeather.LonLat do
   end
 
   def new!(input) do
-    raise "Invalid lon/lat input: #{inspect(input)}"
+    raise ArgumentError, "Invalid lon/lat input: #{inspect(input)}"
   end
 end

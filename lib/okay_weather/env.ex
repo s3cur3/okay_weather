@@ -1,5 +1,7 @@
 defmodule OkayWeather.Env do
-  def get_env(key, default \\ nil)
+  @moduledoc false
+
+  def get_env(key, default)
 
   if Mix.env() == :test do
     def get_env(key, default), do: ProcessTree.get(key, cache: false, default: default)

@@ -17,7 +17,6 @@ Now, on the other hand, the thing that makes this library okay in a *positive* s
 
 **Warning**: okay_weather is pre-alpha right now. Please assume everything is broken.
 
-
 ## Installation
 
 1. Add the package to your `mix.exs`:
@@ -31,6 +30,10 @@ Now, on the other hand, the thing that makes this library okay in a *positive* s
 2. Run `mix deps.get`
 3. Optional, but strongly recommended: add OkayWeather configuration
     (see below) to your `config/test.exs` and `config/dev.exs` files.
+4. Use it:
+    ```elixir
+    %OkayWeather.Metar{} = metar = OkayWeather.nearest_metar({12.34, 56.78}) do
+    ```
 
 ## Configuration
 

@@ -40,13 +40,6 @@ jobs:
           build-flags: --all-warnings --warnings-as-errors
 
       - name: Run Tests
-        run: mix coveralls.json --warnings-as-errors --include integration --include timing
+        run: mix coveralls.github --warnings-as-errors --include integration --include timing
 
-      - name: Upload to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./cover/excoveralls.json
-          slug: s3cur3/okay_weather
-        if: ${{ matrix.elixir == '1.18.4' && matrix.otp == '28.0.2' }}
 

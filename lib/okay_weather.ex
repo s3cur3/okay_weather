@@ -1,8 +1,8 @@
 defmodule OkayWeather do
   @moduledoc """
-  A library for looking up the current weather in a particular location.
+  `OkayWeather` is an Elixir package for looking up the current weather in a particular location.
 
-  It will work by fetching METAR weather data from NOAA, parsing it, and providing a way to query it based on latitude and longitude or nearest airport.
+  It works by fetching [METAR weather data](https://en.wikipedia.org/wiki/METAR) from NOAA, parsing it, and providing a way to query it based on latitude and longitude or nearest airport.
 
   Why it this just okay? A few reasons:
 
@@ -16,26 +16,42 @@ defmodule OkayWeather do
   ## Installation
 
   1. Add the package to your `mix.exs`:
-    ```elixir
+  ```elixir
     defp deps do
     [
       {:okay_weather, github: "s3cur3/okay_weather"},
     ]
     end
-    ```
+  ```
   2. Run `mix deps.get`
-  3. Grab the data:
-    ```elixir
-    case OkayWeather.nearest_metar({12.34, 56.78}) do
-      %OkayWeather.Metar{} = metar ->
-        # Do something with the METAR data
-        ...
+  3. Optional, but strongly recommended: add OkayWeather configuration
+      (see below) to your `config/test.exs` and `config/dev.exs` files.
+  4. Use it:
+      ```elixir
+      %OkayWeather.Metar{} = metar = OkayWeather.nearest_metar({12.34, 56.78}) do
+      ```
 
-      nil ->
-        # There was a problem fetching all METAR data
-        ...
-    end
-    ```
+  ## Configuration
+
+  There is only one application-level config value, `:fetch_before_startup?`.
+  This controls whether OkayWeather should attempt to fetch the latest
+  weather data *prior* to your application's startup.
+
+  ```elixir
+  config :okay_weather, fetch_before_startup?: true
+  ```
+
+  This defaults to true for the sake of correctness; when true, any call
+  to `OkayWeather.*` will always be working from the latest available data.
+  However, you almost certainly want this to be false in test environments
+  (e.g., in your `config/test.exs`) and probably in dev as well
+  (`config/dev.exs`) so that you don't add a few seconds for a synchronous
+  network request to the startup time of your application and test suite.
+
+  When false, initial calls to OkayWeather functions will use METAR data from
+  either the last successful fetch the application cached (if your
+  `System.tmp_dir!/0` remains in place from a prior successful launch of the
+  application) or from an extremely old METAR that ships with the package.
   """
   alias OkayWeather.AutoUpdatingCache
   alias OkayWeather.LonLat
