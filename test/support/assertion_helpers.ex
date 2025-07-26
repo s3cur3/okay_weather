@@ -5,7 +5,7 @@ defmodule OkayWeather.AssertionHelpers do
   Asserts that a predicate becomes true within the given timeout.
   """
   @spec await((-> boolean), timeout) :: boolean
-  def await(predicate, timeout \\ to_timeout(second: 10))
+  def await(predicate, timeout \\ :timer.seconds(10))
 
   def await(predicate, timeout) when timeout <= 0 do
     assert predicate.()
