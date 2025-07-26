@@ -45,7 +45,6 @@ jobs:
       - name: Upload to Codecov
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./cover/excoveralls.json
           slug: s3cur3/okay_weather
         if: ${{ matrix.elixir == '1.18.4' && matrix.otp == '28.0.2' }}
