@@ -78,10 +78,10 @@ defmodule OkayWeather do
 
       iex> OkayWeather.summary(%{lon: 2.54, lat: 49.0127})
       %OkayWeather.Summary{
-        temperature_deg_c: 21,
-        temperature_feel: :nice,
-        wind_level: :moderate,
-        cloud_cover: :broken
+        temperature_deg_c: 27,
+        temperature_feel: :warm,
+        wind_level: :light,
+        cloud_cover: :clear
       }
   """
   @spec summary(LonLat.input()) :: Summary.t()
@@ -105,17 +105,17 @@ defmodule OkayWeather do
       %OkayWeather.Metar{
         airport_code: "LFPG",
         altimeter: nil,
-        cloud_layers: [%{coverage: "BKN", height_ft: 2700}, %{coverage: "BKN", height_ft: 18000}],
-        dewpoint_deg_c: 14,
+        cloud_layers: [],
+        dewpoint_deg_c: 13,
         issued: nil,
         lon_lat: {2.55, 49.012798},
         remarks: [],
-        temperature_deg_c: 21,
-        visibility_m: 9999,
-        weather_conditions: ["TEMPO"],
+        temperature_deg_c: 27,
+        visibility_m: nil,
+        weather_conditions: ["CAVOK", "NOSIG"],
         wind_direction_deg: 290,
         wind_gust_kts: nil,
-        wind_speed_kts: 11
+        wind_speed_kts: 9
       }
   """
   @spec nearest_metar(LonLat.input(), keyword) :: OkayWeather.Metar.t()
@@ -139,17 +139,17 @@ defmodule OkayWeather do
       %OkayWeather.Metar{
         airport_code: "LFPG",
         altimeter: nil,
-        cloud_layers: [%{coverage: "BKN", height_ft: 2700}, %{coverage: "BKN", height_ft: 18000}],
-        dewpoint_deg_c: 14,
+        cloud_layers: [],
+        dewpoint_deg_c: 13,
         issued: nil,
         lon_lat: {2.55, 49.012798},
         remarks: [],
-        temperature_deg_c: 21,
-        visibility_m: 9999,
-        weather_conditions: ["TEMPO"],
+        temperature_deg_c: 27,
+        visibility_m: nil,
+        weather_conditions: ["CAVOK", "NOSIG"],
         wind_direction_deg: 290,
         wind_gust_kts: nil,
-        wind_speed_kts: 11
+        wind_speed_kts: 9
       }
   """
   @spec nearest_metar_where(LonLat.input(), (Metar.t() -> boolean()), keyword) ::
