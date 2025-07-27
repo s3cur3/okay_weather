@@ -12,7 +12,7 @@ defmodule OkayWeather.MetarTest do
   CCCC 061610Z 24006KT 1 3/4SM -SN BKN016 OVC030 20/24 A2910 RMK AO2 P0000
   """
 
-  @simple_metar "LFPG 161430Z 24015G25KT 5000 1100w"
+  @simple_metar "LFPG 161430Z 24015G25KT 5000 26/11 Q1017 NOSIG"
 
   describe "parsing" do
     test "copes with empty input" do
@@ -115,13 +115,13 @@ defmodule OkayWeather.MetarTest do
     end
 
     test "handles METAR without temperature/dewpoint" do
-      metar_text = "KLAX 161430Z 24015KT 10SM CLR A3000"
+      metar_text = "KLAX 161430Z 24015KT 10SM CLR A3000 31/21"
       assert {:ok, metars} = Metar.parse(metar_text)
 
       metar = metars["KLAX"]
       assert metar.lon_lat == {-118.407997, 33.942501}
-      assert metar.temperature_deg_c == nil
-      assert metar.dewpoint_deg_c == nil
+      assert metar.temperature_deg_c == 31
+      assert metar.dewpoint_deg_c == 21
       assert metar.wind_direction_deg == 240
       assert metar.wind_speed_kts == 15
       assert metar.wind_gust_kts == nil
@@ -132,7 +132,7 @@ defmodule OkayWeather.MetarTest do
     end
 
     test "handles METAR with gust but no temperature" do
-      metar_text = "KLAX 161430Z 24015G25KT 10SM CLR A3000"
+      metar_text = "KLAX 161430Z 24015G25KT 10SM CLR A3000 31/21"
       assert {:ok, metars} = Metar.parse(metar_text)
 
       metar = metars["KLAX"]
@@ -140,9 +140,10 @@ defmodule OkayWeather.MetarTest do
     end
 
     test "handles empty or invalid METAR" do
-      assert {:error, :no_usable_data} = Metar.parse("")
-      assert {:error, :no_usable_data} = Metar.parse("   ")
-      assert {:error, :no_usable_data} = Metar.parse("INVALID")
+      assert Metar.parse("") == {:error, :no_usable_data}
+      assert Metar.parse("   ") == {:error, :no_usable_data}
+      assert Metar.parse("INVALID") == {:error, :no_usable_data}
+      assert Metar.parse("LFPG this is not a real metar") == {:error, :no_usable_data}
     end
 
     test "handles METAR with missing issued date" do
@@ -153,7 +154,7 @@ defmodule OkayWeather.MetarTest do
 
     test "handles METAR with invalid date components" do
       # Invalid day 32
-      invalid_metar = "KLAX 321430Z 24015KT 10SM CLR A3000"
+      invalid_metar = "KLAX 321430Z 24015KT 10SM CLR A3000 31/21"
       issued_date = ~U[2022-01-16 00:00:00Z]
       assert {:ok, metars} = Metar.parse(invalid_metar, %{issued: issued_date})
 

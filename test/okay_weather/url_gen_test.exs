@@ -7,5 +7,8 @@ defmodule OkayWeather.UrlGenTest do
 
     assert UrlGen.metar(test_date) ==
              "https://tgftp.nws.noaa.gov/data/observations/metar/cycles/23Z.TXT"
+
+    assert UrlGen.metar(~U[2025-07-27 02:00:00Z]) ==
+             "https://tgftp.nws.noaa.gov/data/observations/metar/cycles/01Z.TXT"
   end
 end

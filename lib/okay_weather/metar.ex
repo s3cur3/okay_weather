@@ -138,7 +138,7 @@ defmodule OkayWeather.Metar do
       end)
       |> Enum.filter(fn
         nil -> false
-        %__MODULE__{temperature_deg_c: nil} -> false
+        {_, %__MODULE__{temperature_deg_c: nil}} -> false
         _ -> true
       end)
       |> Map.new()
