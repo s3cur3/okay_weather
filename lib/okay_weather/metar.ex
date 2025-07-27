@@ -89,8 +89,7 @@ defmodule OkayWeather.Metar do
         |> parse_tokenized_line(issued_date)
       end)
       |> Enum.filter(fn
-        {nil, _metar} -> false
-        {_code, nil} -> false
+        nil -> false
         _ -> true
       end)
       |> Map.new()
@@ -103,8 +102,8 @@ defmodule OkayWeather.Metar do
   end
 
   # If we have fewer than two tokens, we can't possibly get anything out of this line
-  defp parse_tokenized_line([], _issued_date), do: {nil, nil}
-  defp parse_tokenized_line([_], _issued_date), do: {nil, nil}
+  defp parse_tokenized_line([], _issued_date), do: nil
+  defp parse_tokenized_line([_], _issued_date), do: nil
 
   defp parse_tokenized_line([apt_code | other_tokens], issued_date) do
     metar = %__MODULE__{

@@ -55,9 +55,10 @@ defmodule OkayWeather.AutoUpdatingCache.State do
   end
 
   defp fetch(url, timeout) when is_binary(url) do
-    case Req.get(url, receive_timeout: timeout) do
+    case Req.get(url, receive_timeout: timeout, retry: false) do
       {:ok, %{status: status, body: body}} when status < 300 -> {:ok, body}
-      err -> err
+      {:ok, %{status: _} = result} -> {:error, result}
+      {:error, _} = error -> error
     end
   end
 end

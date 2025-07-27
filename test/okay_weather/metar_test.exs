@@ -17,6 +17,7 @@ defmodule OkayWeather.MetarTest do
     test "copes with empty input" do
       assert Metar.parse("") == {:error, :no_usable_data}
       assert Metar.parse("\n\n") == {:error, :no_usable_data}
+      assert Metar.parse("KLAX ") == {:error, :no_usable_data}
     end
 
     test "extracts airport code" do

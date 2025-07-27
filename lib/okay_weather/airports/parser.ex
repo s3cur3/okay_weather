@@ -9,16 +9,12 @@ defmodule OkayWeather.Airports.Parser do
     file_path
     |> File.stream!()
     |> OkayWeather.Airports.NimbleParser.parse_stream()
-    |> Stream.map(fn
-      [_, "ident", _, _, "latitude_deg", "longitude_deg" | _] ->
-        {nil, nil}
-
-      [_, ident, _, _, lat, lon | _] ->
-        %Airport{
-          airport_code: ident,
-          latitude: parse_number(lat),
-          longitude: parse_number(lon)
-        }
+    |> Stream.map(fn [_, ident, _, _, lat, lon | _] ->
+      %Airport{
+        airport_code: ident,
+        latitude: parse_number(lat),
+        longitude: parse_number(lon)
+      }
     end)
     |> Map.new(&{&1.airport_code, &1})
     |> Map.delete(nil)
