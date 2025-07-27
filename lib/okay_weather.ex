@@ -28,9 +28,11 @@ defmodule OkayWeather do
       (see below) to your `config/test.exs` and `config/dev.exs` files.
   4. Use it:
       ```elixir
-      latitude = 56.78
-      longitude = 12.34
-      %OkayWeather.Metar{} = metar = OkayWeather.nearest_metar(%{lon: longitude, lat: latitude})
+      %OkayWeather.Summary{
+        temperature_deg_c: temperature,
+        wind_level: wind_level,
+        cloud_cover: cloud_cover
+      } = OkayWeather.summary(%{lon: 12.34, lat: 56.78})
       ```
 
   ## Configuration
@@ -67,6 +69,27 @@ defmodule OkayWeather do
   alias OkayWeather.LonLat
   alias OkayWeather.Metar
   alias OkayWeather.Result
+  alias OkayWeather.Summary
+
+  @doc """
+  Returns a summary of the current weather at the given location.
+
+  ## Examples
+
+      iex> OkayWeather.summary(%{lon: 2.54, lat: 49.0127})
+      %OkayWeather.Summary{
+        temperature_deg_c: 21,
+        temperature_feel: :nice,
+        wind_level: :moderate,
+        cloud_cover: :broken
+      }
+  """
+  @spec summary(LonLat.input()) :: Summary.t()
+  def summary(lon_lat, opts \\ []) do
+    lon_lat
+    |> nearest_metar(opts)
+    |> Metar.summarize()
+  end
 
   @doc """
   Finds the nearest METAR to the given longitude and latitude from the cache.
@@ -78,11 +101,22 @@ defmodule OkayWeather do
 
   ## Example
 
-      iex> match?(
-      ...>   %OkayWeather.Metar{airport_code: "LFPG", lon_lat: {2.55, 49.012798}},
-      ...>   OkayWeather.nearest_metar(%{lon: 2.54, lat: 49.0127})
-      ...> )
-      true
+      iex> OkayWeather.nearest_metar(%{lon: 2.54, lat: 49.0127})
+      %OkayWeather.Metar{
+        airport_code: "LFPG",
+        altimeter: nil,
+        cloud_layers: [%{coverage: "BKN", height_ft: 2700}, %{coverage: "BKN", height_ft: 18000}],
+        dewpoint_deg_c: 14,
+        issued: nil,
+        lon_lat: {2.55, 49.012798},
+        remarks: [],
+        temperature_deg_c: 21,
+        visibility_m: 9999,
+        weather_conditions: ["TEMPO"],
+        wind_direction_deg: 290,
+        wind_gust_kts: nil,
+        wind_speed_kts: 11
+      }
   """
   @spec nearest_metar(LonLat.input(), keyword) :: OkayWeather.Metar.t()
   def nearest_metar(lon_lat, opts \\ []) do
@@ -98,14 +132,25 @@ defmodule OkayWeather do
 
   ## Examples
 
-      iex> match?(
-      ...>   %OkayWeather.Metar{airport_code: "LFPG"},
-      ...>   OkayWeather.nearest_metar_where(
-      ...>     [lon: 0, lat: 0],
-      ...>     fn %OkayWeather.Metar{airport_code: code} -> code == "LFPG" end
-      ...>   )
+      iex> OkayWeather.nearest_metar_where(
+      ...>   [lon: 0, lat: 0],
+      ...>   fn %OkayWeather.Metar{airport_code: code} -> code == "LFPG" end
       ...> )
-      true
+      %OkayWeather.Metar{
+        airport_code: "LFPG",
+        altimeter: nil,
+        cloud_layers: [%{coverage: "BKN", height_ft: 2700}, %{coverage: "BKN", height_ft: 18000}],
+        dewpoint_deg_c: 14,
+        issued: nil,
+        lon_lat: {2.55, 49.012798},
+        remarks: [],
+        temperature_deg_c: 21,
+        visibility_m: 9999,
+        weather_conditions: ["TEMPO"],
+        wind_direction_deg: 290,
+        wind_gust_kts: nil,
+        wind_speed_kts: 11
+      }
   """
   @spec nearest_metar_where(LonLat.input(), (Metar.t() -> boolean()), keyword) ::
           OkayWeather.Metar.t() | nil

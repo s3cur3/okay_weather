@@ -32,6 +32,8 @@ defmodule OkayWeather.AutoUpdatingCacheTest do
     bypass: bypass,
     bypass_domain: bypass_domain
   } do
+    OkayWeather.Env.put_env(:fetch_before_startup?, true)
+
     Bypass.expect(bypass, fn conn ->
       Plug.Conn.resp(conn, 500, "Internal Server Error")
     end)
@@ -97,6 +99,8 @@ defmodule OkayWeather.AutoUpdatingCacheTest do
   @tag :capture_log
   @tag :timing
   test "copes with error in update", %{bypass: bypass, bypass_domain: bypass_domain} do
+    OkayWeather.Env.put_env(:fetch_before_startup?, true)
+
     update_interval_ms = 100
     initial_time = DateTime.utc_now() |> to_string()
 

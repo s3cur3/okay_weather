@@ -1,6 +1,7 @@
 defmodule OkayWeather.MetarTest do
   use ExUnit.Case, async: true
   alias OkayWeather.Metar
+  alias OkayWeather.Summary
 
   # Tests modeled after MIT-licensed Ruby package `metar-parser`:
   # https://github.com/joeyates/metar-parser/blob/main/spec/parser_spec.rb
@@ -124,6 +125,7 @@ defmodule OkayWeather.MetarTest do
       assert metar.wind_direction_deg == 240
       assert metar.wind_speed_kts == 15
       assert metar.wind_gust_kts == nil
+      assert metar.cloud_layers == []
       ten_miles_in_meters = 16_093.44
       assert metar.visibility_m == ten_miles_in_meters
       assert metar.altimeter == 30.00
@@ -186,5 +188,144 @@ defmodule OkayWeather.MetarTest do
     assert Metar.nearest_where(metars, {0, 0}, &(&1.airport_code == "LFPG")) == metars["LFPG"]
     assert Metar.nearest_where(metars, {0, 0}, &(&1.airport_code == "KLAX")) == metars["KLAX"]
     assert Metar.nearest_where(metars, {0, 0}, &(&1.airport_code == "KORD")) == metars["KORD"]
+  end
+
+  describe "summarize/1" do
+    test "produces expected values" do
+      test_pairs = [
+        {
+          %Metar{
+            airport_code: "LFPG",
+            temperature_deg_c: -11,
+            wind_speed_kts: 10,
+            cloud_layers: [
+              %{coverage: "BKN", height_ft: 1000},
+              %{coverage: "OVC", height_ft: 2000}
+            ]
+          },
+          %Summary{
+            temperature_deg_c: -11,
+            temperature_feel: :cold,
+            wind_level: :light,
+            cloud_cover: :overcast
+          }
+        },
+        # cool, moderate wind, broken
+        {
+          %Metar{
+            airport_code: "EGLL",
+            temperature_deg_c: 15,
+            wind_speed_kts: 15,
+            cloud_layers: [
+              %{coverage: "BKN", height_ft: 1500}
+            ]
+          },
+          %Summary{
+            temperature_deg_c: 15,
+            temperature_feel: :cool,
+            wind_level: :moderate,
+            cloud_cover: :broken
+          }
+        },
+        # nice, high wind, scattered
+        {
+          %Metar{
+            airport_code: "JFK",
+            temperature_deg_c: 22,
+            wind_speed_kts: 25,
+            cloud_layers: [
+              %{coverage: "SCT", height_ft: 3000}
+            ]
+          },
+          %Summary{
+            temperature_deg_c: 22,
+            temperature_feel: :nice,
+            wind_level: :high,
+            cloud_cover: :scattered
+          }
+        },
+        # warm, gale wind, few clouds
+        {
+          %Metar{
+            airport_code: "SFO",
+            temperature_deg_c: 28,
+            wind_speed_kts: 35,
+            cloud_layers: [
+              %{coverage: "FEW", height_ft: 5000}
+            ]
+          },
+          %Summary{
+            temperature_deg_c: 28,
+            temperature_feel: :warm,
+            wind_level: :gale,
+            cloud_cover: :few
+          }
+        },
+        # hot, storm wind, clear
+        {
+          %Metar{
+            airport_code: "PHX",
+            temperature_deg_c: 38,
+            wind_speed_kts: 55,
+            cloud_layers: []
+          },
+          %Summary{
+            temperature_deg_c: 38,
+            temperature_feel: :hot,
+            wind_level: :storm,
+            cloud_cover: :clear
+          }
+        },
+        # hot, no wind, clear
+        {
+          %Metar{
+            airport_code: "MIA",
+            temperature_deg_c: 35,
+            wind_speed_kts: nil,
+            cloud_layers: []
+          },
+          %Summary{
+            temperature_deg_c: 35,
+            temperature_feel: :hot,
+            wind_level: nil,
+            cloud_cover: :clear
+          }
+        },
+        # nice, light wind, clear (cloud_layers not set)
+        {
+          %Metar{
+            airport_code: "ORD",
+            temperature_deg_c: 21,
+            wind_speed_kts: 5,
+            cloud_layers: nil
+          },
+          %Summary{
+            temperature_deg_c: 21,
+            temperature_feel: :nice,
+            wind_level: :light,
+            cloud_cover: :clear
+          }
+        },
+        # cold, light wind, clear (cloud_layers empty)
+        {
+          %Metar{
+            airport_code: "ANC",
+            temperature_deg_c: 0,
+            wind_speed_kts: 8,
+            cloud_layers: []
+          },
+          %Summary{
+            temperature_deg_c: 0,
+            temperature_feel: :cold,
+            wind_level: :light,
+            cloud_cover: :clear
+          }
+        }
+      ]
+
+      for {metar, expected_summary} <- test_pairs do
+        assert Metar.summarize(metar) == expected_summary
+      end
+    end
   end
 end

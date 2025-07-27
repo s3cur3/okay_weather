@@ -1,4 +1,13 @@
 defmodule OkayWeather.Metar do
+  @moduledoc """
+  A [METAR weather report](https://en.wikipedia.org/wiki/METAR), produced by NOAA.
+
+  Includes information about the temperature, wind, cloud cover, visibility, and more
+  at a reporting station.
+  """
+
+  alias OkayWeather.Summary
+
   @enforce_keys [:airport_code]
   defstruct [
     :airport_code,
@@ -26,7 +35,7 @@ defmodule OkayWeather.Metar do
           visibility_m: integer() | nil,
           weather_conditions: [String.t()],
           cloud_layers: [map()],
-          temperature_deg_c: integer() | nil,
+          temperature_deg_c: integer(),
           dewpoint_deg_c: integer() | nil,
           altimeter: float() | nil,
           remarks: [String.t()]
@@ -34,6 +43,45 @@ defmodule OkayWeather.Metar do
 
   @typedoc "A METAR collection maps airport identifier to the latest METAR data"
   @type collection :: %{String.t() => t()}
+
+  @doc """
+  Summarizes a METAR report into a format suitable for a visual summary UI.
+  """
+  def summarize(%__MODULE__{temperature_deg_c: temperature_deg_c} = metar)
+      when is_number(temperature_deg_c) do
+    cloud_layers = List.wrap(metar.cloud_layers)
+
+    %Summary{
+      temperature_deg_c: temperature_deg_c,
+      # "30's hot / 20's nice / 10 is cold / Zero's ice"
+      temperature_feel:
+        cond do
+          temperature_deg_c <= 10 -> :cold
+          temperature_deg_c <= 19 -> :cool
+          temperature_deg_c <= 24 -> :nice
+          temperature_deg_c < 30 -> :warm
+          true -> :hot
+        end,
+      # Loosely modeled off the Beaufort scale: https://en.wikipedia.org/wiki/Beaufort_scale
+      wind_level:
+        cond do
+          not is_number(metar.wind_speed_kts) -> nil
+          metar.wind_speed_kts <= 10 -> :light
+          metar.wind_speed_kts <= 20 -> :moderate
+          metar.wind_speed_kts < 28 -> :high
+          metar.wind_speed_kts < 48 -> :gale
+          true -> :storm
+        end,
+      cloud_cover:
+        cond do
+          Enum.any?(cloud_layers, &(&1.coverage == "OVC")) -> :overcast
+          Enum.any?(cloud_layers, &(&1.coverage == "BKN")) -> :broken
+          Enum.any?(cloud_layers, &(&1.coverage == "SCT")) -> :scattered
+          Enum.any?(cloud_layers, &(&1.coverage == "FEW")) -> :few
+          true -> :clear
+        end
+    }
+  end
 
   @doc """
   Finds the nearest METAR to the given longitude and latitude using the Haversine formula.
@@ -90,6 +138,7 @@ defmodule OkayWeather.Metar do
       end)
       |> Enum.filter(fn
         nil -> false
+        %__MODULE__{temperature_deg_c: nil} -> false
         _ -> true
       end)
       |> Map.new()
