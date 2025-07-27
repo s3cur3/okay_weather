@@ -194,61 +194,29 @@ defmodule OkayWeather.Metar do
 
   defp parse_day(tokens) do
     case Enum.find(tokens, &String.match?(&1, ~r/^\d{6}Z$/)) do
-      nil ->
-        nil
-
-      date_time_str ->
-        day_str = String.slice(date_time_str, 0, 2)
-
-        case Integer.parse(day_str) do
-          {day, _} -> day
-          _ -> nil
-        end
+      nil -> nil
+      date_time_str -> String.slice(date_time_str, 0, 2) |> parse_int()
     end
   end
 
   defp parse_hour(tokens) do
     case Enum.find(tokens, &String.match?(&1, ~r/^\d{6}Z$/)) do
-      nil ->
-        nil
-
-      date_time_str ->
-        hour_str = String.slice(date_time_str, 2, 2)
-
-        case Integer.parse(hour_str) do
-          {hour, _} -> hour
-          _ -> nil
-        end
+      nil -> nil
+      date_time_str -> String.slice(date_time_str, 2, 2) |> parse_int()
     end
   end
 
   defp parse_minute(tokens) do
     case Enum.find(tokens, &String.match?(&1, ~r/^\d{6}Z$/)) do
-      nil ->
-        nil
-
-      date_time_str ->
-        minute_str = String.slice(date_time_str, 4, 2)
-
-        case Integer.parse(minute_str) do
-          {minute, _} -> minute
-          _ -> nil
-        end
+      nil -> nil
+      date_time_str -> String.slice(date_time_str, 4, 2) |> parse_int()
     end
   end
 
   defp parse_wind_direction_deg(tokens) do
     case Enum.find(tokens, &String.match?(&1, wind_regex())) do
-      nil ->
-        nil
-
-      wind_str ->
-        direction_str = String.slice(wind_str, 0, 3)
-
-        case Integer.parse(direction_str) do
-          {direction, _} -> direction
-          _ -> nil
-        end
+      nil -> nil
+      wind_str -> String.slice(wind_str, 0, 3) |> parse_int()
     end
   end
 
@@ -262,14 +230,8 @@ defmodule OkayWeather.Metar do
         speed_part = String.slice(wind_str, 3, String.length(wind_str) - 3)
 
         case Regex.run(~r/^(\d{2,3})(?:G\d{2,3})?KT$/, speed_part) do
-          [_, speed_str] ->
-            case Integer.parse(speed_str) do
-              {speed, _} -> speed
-              _ -> nil
-            end
-
-          _ ->
-            nil
+          [_, speed_str] -> parse_int(speed_str)
+          _ -> nil
         end
     end
   end
@@ -281,14 +243,8 @@ defmodule OkayWeather.Metar do
 
       wind_str ->
         case Regex.run(~r/G(\d{2,3})KT$/, wind_str) do
-          [_, gust_str] ->
-            case Integer.parse(gust_str) do
-              {gust, _} -> gust
-              _ -> nil
-            end
-
-          _ ->
-            nil
+          [_, gust_str] -> parse_int(gust_str)
+          _ -> nil
         end
     end
   end
@@ -307,18 +263,11 @@ defmodule OkayWeather.Metar do
       vis_str ->
         # Handle statute miles (e.g., "10SM")
         if String.ends_with?(vis_str, "SM") do
-          miles_str = String.slice(vis_str, 0, String.length(vis_str) - 2)
-
-          case Integer.parse(miles_str) do
-            {miles, _} -> miles * @miles_to_meters
-            _ -> nil
-          end
+          String.slice(vis_str, 0, String.length(vis_str) - 2)
+          |> parse_int(&(&1 * @miles_to_meters))
         else
           # Handle meters (e.g., "5000")
-          case Integer.parse(vis_str) do
-            {visibility_m, _} -> visibility_m
-            _ -> nil
-          end
+          parse_int(vis_str)
         end
     end
   end
@@ -340,9 +289,9 @@ defmodule OkayWeather.Metar do
       coverage = String.slice(cloud_str, 0, 3)
       height_str = String.slice(cloud_str, 3, 3)
 
-      case Integer.parse(height_str) do
-        {height, _} -> %{coverage: coverage, height_ft: height * 100}
-        _ -> %{coverage: coverage, height_ft: nil}
+      case parse_int(height_str) do
+        nil -> %{coverage: coverage, height_ft: nil}
+        height -> %{coverage: coverage, height_ft: height * 100}
       end
     end)
   end
@@ -371,16 +320,8 @@ defmodule OkayWeather.Metar do
 
   defp parse_altimeter(tokens) do
     case Enum.find(tokens, &String.match?(&1, ~r/^A\d{4}$/)) do
-      nil ->
-        nil
-
-      alt_str ->
-        pressure_str = String.slice(alt_str, 1, 4)
-
-        case Integer.parse(pressure_str) do
-          {pressure, _} -> pressure / 100.0
-          _ -> nil
-        end
+      nil -> nil
+      alt_str -> String.slice(alt_str, 1, 4) |> parse_int(&(&1 / 100.0))
     end
   end
 
@@ -393,4 +334,19 @@ defmodule OkayWeather.Metar do
 
   defp parse_temp("M" <> temp_str), do: -String.to_integer(temp_str)
   defp parse_temp(temp_str), do: String.to_integer(temp_str)
+
+  @spec parse_int(String.t()) :: integer() | nil
+  defp parse_int(str) when is_binary(str) do
+    case Integer.parse(str) do
+      {int, _} -> int
+      _ -> nil
+    end
+  end
+
+  defp parse_int(str, mapper) do
+    case parse_int(str) do
+      nil -> nil
+      int -> mapper.(int)
+    end
+  end
 end
